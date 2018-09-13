@@ -1,6 +1,9 @@
 import logging
+import pprint
+# import inspect
 
 from scrapy import signals
+from scrapy.utils.gz import gunzip, gzip_magic_number
 
 
 class HttpLogging(object):
@@ -9,24 +12,30 @@ class HttpLogging(object):
         self.logger = logging.getLogger('httplogging')
         crawler.signals.connect(
             self.log,
-            signal=signals.response_received)
+            signal=signals.response_downloaded)
 
     @classmethod
     def from_crawler(cls, crawler):
         return HttpLogging(crawler)
 
     def log(self, response, request, spider):
-        request = response.request
+        body = response.body
+        if gzip_magic_number(response):
+            body = gunzip(body)
         self.logger.debug(
+            # 'RESPONSE RECEIVED (callback {} {}:{})\n'
             'RESPONSE RECEIVED\n'
             'REQUEST {} {}\n{}\n{}\n\n'
             'RESPONSE {}\n{}\n{}...\n'.format(
+                # request.callback.__name__,
+                # inspect.getfile(request.callback),
+                # inspect.getsourcelines(request.callback)[1],
                 request.method,
                 request.url,
-                request.headers,
+                pprint.pformat(request.headers),
                 request.body,
                 response.status,
-                response.headers,
-                response.body[:1024],
+                pprint.pformat(response.headers),
+                body[:1024],
             )
         )
