@@ -13,3 +13,6 @@ Add this to ``settings.py``::
        'httplogging.HttpLogging': 100
    }
 
+To disable colors and box lines, also add this::
+
+    HTTPLOGGING_NOCOLORS = True
