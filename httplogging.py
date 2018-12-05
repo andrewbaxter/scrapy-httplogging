@@ -1,6 +1,6 @@
+from __future__ import unicode_literals
 from scrapy import signals
 from scrapy.utils.gz import gunzip
-from scrapy.utils.gz import gzip_magic_number
 from scrapy.utils.project import get_project_settings
 
 import logging
@@ -18,9 +18,11 @@ class HttpLogging(object):
         return HttpLogging(crawler)
 
     def log(self, response, request, spider):
-        body = response.body
-        if gzip_magic_number(response):
-            body = gunzip(body)
+        try:
+            body = gunzip(response.body)
+        except IOError:
+            body = response.body
+
         pp = pprint.PrettyPrinter(indent=2)
 
         msg_template = self._get_template()
@@ -56,22 +58,32 @@ class HttpLogging(object):
             return '\n'.join(
                 [
                     '',
-                    f'{line1_begin}',
-                    f'  {h1}RESPONSE RECEIVED{end}',
-                    f'  {line2}',
-                    f'  {h2}REQUEST {{}} {under}{{}}{end}',
-                    f'  {line3}',
-                    f'  {h3}Headers{end}:',
-                    f'  {{}}',
-                    f'  {h3}Body{end}:',
-                    f'  {{}}',
-                    f'  {line2}',
-                    f'  {h2}RESPONSE {{}}{end}',
-                    f'  {line3}',
-                    f'  {h3}Headers{end}:',
-                    f'  {{}}',
-                    f'  {h3}Body{end}:',
-                    f'  {{}}...',
-                    f'{line1_end}',
+                    '{line1_begin}',
+                    '  {h1}RESPONSE RECEIVED{end}',
+                    '  {line2}',
+                    '  {h2}REQUEST {{}} {under}{{}}{end}',
+                    '  {line3}',
+                    '  {h3}Headers{end}:',
+                    '  {{}}',
+                    '  {h3}Body{end}:',
+                    '  {{}}',
+                    '  {line2}',
+                    '  {h2}RESPONSE {{}}{end}',
+                    '  {line3}',
+                    '  {h3}Headers{end}:',
+                    '  {{}}',
+                    '  {h3}Body{end}:',
+                    '  {{}}...',
+                    '{line1_end}',
                 ]
+            ).format(
+                end=end,
+                h1=h1,
+                h2=h2,
+                h3=h3,
+                line1_begin=line1_begin,
+                line1_end=line1_end,
+                line2=line2,
+                line3=line3,
+                under=under,
             )
